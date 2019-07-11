@@ -1,1 +1,45 @@
 
+// connection to Impala
+LIB CONNECT TO 'Impala_connection';
+
+
+// Extract of payments_from_fact table
+payments_from_fact:
+LOAD bank_mirror_account as [Bank Mirror Account], 
+    date(floor(date#(business_date,'YYYY-MM-DD'))) as [Payment Date], // convert text to date format
+	account_type as [Account Type], 
+	payer_name as [Payer Name], 
+	payer_scin as [Payer SCIN], 
+	payer_bancs_account_number as [Payer BaNCS Account Number],
+	actual_mop_from as [Payment Method], 
+	value_of_payment_from,
+    count_of_transactions as [No Of Transaction];
+
+SELECT [bank_mirror_account], 
+	business_date, 
+	[account_type], 
+	[payer_name], 
+	[payer_scin], 
+	[payer_bancs_account_number], 
+	[contact_sensitive_indicator], 
+	[contact_personal_interest_indicator], 
+	[actual_mop_from], 
+    [application_fee_indicator],
+	sum([value_of_payment_from]) as [value_of_payment_from],
+    count([payment_from_transaction_number]) as [count_of_transactions]	
+FROM [cap_mi_test].[payments_from_fact]
+group by [bank_mirror_account], 
+	business_date, 
+	[account_type], 
+	[payer_name], 
+	[payer_scin], 
+	[payer_bancs_account_number], 
+	[contact_sensitive_indicator], 
+	[contact_personal_interest_indicator], 
+	[actual_mop_from],
+    [application_fee_indicator];
+
+// store data into the QVD
+Store payments_from_fact into lib://Payments/payments_from_fact.qvd;
+
+Drop Table payments_from_fact; 
