@@ -1,0 +1,44 @@
+Bank_transfer_fact:
+LOAD
+    "Client SCIN",
+    "GL Class Code",
+    "GL Code",
+    gl_transaction_amount,
+    "MISC Reference",
+    "Master Case Number",
+    "Journal No",
+    Key,
+    "GLIF References",
+    "Account Name",
+    "Account Type",
+    "Level1 Liability Type",
+    "Level2 Liability Type",
+    misc_reference_no,
+    previous_bank_transfer_indicator,
+    "Business Date"
+FROM [lib://Bank_transfer_qvd/bank_transfer_fact.qvd]
+(qvd);
+​
+AdminJournals:
+Load Distinct Key,
+              "GLIF References" as [Client Account Number]
+Resident Bank_transfer_fact
+where match(misc_reference_no,11,21,3);
+​
+Right Join(AdminJournals)
+Load Distinct
+               Key,
+               1 as AdminAccountFlag
+Resident Bank_transfer_fact
+where Match("GL Code",'58002');
+​
+MasterCaseForClientAccount:
+Left Keep(AdminJournals)
+Load Distinct "GLIF References" as [Client Account Number],
+              "Master Case Number" as [Client Master Case Number]
+Resident Bank_transfer_fact;
+​
+​
+​
+​
+​
