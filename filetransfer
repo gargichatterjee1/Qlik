@@ -1,0 +1,45 @@
+// connection to Impala
+LIB CONNECT TO 'Cloudera_Impala_kerberized';
+
+
+// Extract of bank_transfer_fact table
+bank_transfer_fact:
+LOAD contact_scin as [Client SCIN],
+	gl_class_code as [GL Class Code], 
+	gl_code as [GL Code], 
+    num(gl_transaction_amount) as gl_transaction_amount,
+    ApplyMap('misc_ref_map',misc_reference,Null()) as [MISC Reference],
+	master_case_number_finance as [Master Case Number], 
+	gl_journal_no as [Journal No], 
+	glif_references as [GLIF References], 
+	account_name as [Account Name], 
+    autonumber(date(Date#(business_date,'YYYY-MM-DD'))&gl_journal_no) as Key,
+	gl_account_type as [Account Type], 
+	level1_liability_type as [Level1 Liability Type], 
+	level2_liability_type as [Level2 Liability Type], 
+	floor(Num#(misc_reference)) as misc_reference_no, 
+	floor(Num#(previous_bank_transfer_indicator)) as previous_bank_transfer_indicator, 
+	date(Date#(business_date,'YYYY-MM-DD')) as [Business Date];
+SELECT [contact_scin], 
+	[contact_sensitive_indicator], 
+	[contact_personal_interest_indicator], 
+	[gl_class_code], 
+	[gl_code], 
+	[gl_transaction_amount], 
+	[gl_transaction_date], 
+	[master_case_number_finance], 
+	[gl_journal_no], 
+	[glif_references], 
+	[account_name], 
+	[gl_account_type], 
+	[level1_liability_type], 
+	[level2_liability_type], 
+	[misc_reference], 
+	if([previous_bank_transfer_indicator]='1',0,0) as [previous_bank_transfer_indicator], 
+	[process_time], 
+	[business_date] 
+FROM [ddb_cms2012].[bank_transfer_fact];
+// store data into the QVD
+Store bank_transfer_fact into lib://Bank_transfer_qvd/bank_transfer_fact.qvd;
+
+Drop Table bank_transfer_fact; 
